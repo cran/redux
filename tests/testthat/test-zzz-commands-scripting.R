@@ -2,7 +2,7 @@ context("commands - scripting")
 
 test_that("EVAL", {
   skip_if_cmd_unsupported("EVAL")
-  con <- hiredis()
+  con <- test_hiredis_connection()
 
   res <- con$EVAL("return {KEYS[1],KEYS[2],ARGV[1],ARGV[2]}", 2,
                   c("key1", "key2"), c("first", "second"))
@@ -11,11 +11,12 @@ test_that("EVAL", {
 
 test_that("EVALSHA/SCRIPT LOAD", {
   skip_if_cmd_unsupported("EVALSHA")
-  con <- hiredis()
+  con <- test_hiredis_connection()
   key <- rand_str()
 
   x <- serialize(runif(10), NULL)
   con$SET(key, x)
+  on.exit(con$DEL(key))
 
   sha <- con$SCRIPT_LOAD(sprintf("return redis.call('get', '%s')", key))
   expect_identical(con$EVALSHA(sha, 1, key, NULL), x)

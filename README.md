@@ -1,9 +1,10 @@
 # redux
 
-[![Project Status: WIP - Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](http://www.repostatus.org/badges/latest/wip.svg)](http://www.repostatus.org/#wip)
-[![Build Status](https://travis-ci.org/richfitz/redux.png?branch=master)](https://travis-ci.org/richfitz/redux)
+[![Project Status: Active - The project has reached a stable, usable state and is being actively developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
+[![Build Status](https://travis-ci.org/richfitz/redux.svg?branch=master)](https://travis-ci.org/richfitz/redux)
 [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/richfitz/redux?branch=master&svg=true)](https://ci.appveyor.com/project/richfitz/redux)
 [![codecov.io](https://codecov.io/github/richfitz/redux/coverage.svg?branch=master)](https://codecov.io/github/richfitz/redux?branch=master)
+[![](http://www.r-pkg.org/badges/version/redux)](https://cran.r-project.org/package=redux)
 
 `redux` provides an inteface to Redis.  Two interfaces are provided; a low level interface (allowing execution of arbitrary Redis commands with almost no interface) and a high-level interface with an API that matches all of the several hundred Redis commands.
 
@@ -12,8 +13,10 @@ As well as supporting Redis commands, `redux` supports:
 * **pipelineing**: execute more than one command in a single Redis roundtrip, which can greatly increase performance, especially over high-latency connections.
 * **socket connections**: can connect to a locally running Redis instance over a unix socket (if Redis is configured to do so) for faster communication.
 * **flexible serialisation**: serialise any part of a Redis command, including keys and fields.  Binary serialisation is supported via `object_to_bin` / `bin_to_object`, which are thin wrappers around `serialize` / `unserialize`
-* **subscriptions**: create a simple blocking subscribe client, applying a callback function to every message recieved.
+* **subscriptions**: create a simple blocking subscribe client, applying a callback function to every message received.
 * **error handling**: Every Redis error becomes an  R error.
+
+`redux` also provides a driver for [`storr`](https://cran.r-project.org/package=storr), allowing easy exchange of R objects between computers.
 
 ## Usage
 
@@ -55,7 +58,25 @@ r$SET("foo", "bar")
 
 See the package vignette for more information (`vignette("redux")`) or https://richfitz.github.io/redux/vignettes/redux.html
 
+## Testing
+
+To use the test suite, please set the environment variables
+
+- `NOT_CRAN=true`
+- `REDUX_TEST_USE_REDIS=true`
+- `REDUX_TEST_USE_REDIS_ISOLATED=true`
+
+The first two opt in to using redis _at all_, and the third activates commands that may be destructive or undesirable to use on a production server.
+
 ## Installation
+
+Install from CRAN with
+
+```r
+install.packages("redux")
+```
+
+or install the development version with
 
 ```r
 remotes::install_github("richfitz/redux", upgrade = FALSE)

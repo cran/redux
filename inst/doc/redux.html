@@ -12,7 +12,7 @@
 
 <meta name="author" content="Rich FitzJohn" />
 
-<meta name="date" content="2017-05-11" />
+<meta name="date" content="2018-05-25" />
 
 <title>Using Redis with redux</title>
 
@@ -70,7 +70,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Using Redis with redux</h1>
 <h4 class="author"><em>Rich FitzJohn</em></h4>
-<h4 class="date"><em>2017-05-11</em></h4>
+<h4 class="date"><em>2018-05-25</em></h4>
 
 
 
@@ -106,16 +106,16 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <pre><code>## [1] &quot;mydata&quot;</code></pre>
 <div id="serialisation" class="section level1">
 <h1>Serialisation</h1>
-<p>The value for most arguments must be a string or will be coerced into one; clearly this is not going to be suitable for most R objects. The solution is to <em>serialise</em> the R object. <code>redux</code> can accept objects serialised to strings or to byte streams, and the functions the <code>object_to_bin</code> and <code>object_to_string</code> functions can help here, serialising the objects to binary and string represenations. (Alternatively you can do this yourself using <code>serialize</code>.)</p>
+<p>The value for most arguments must be a string or will be coerced into one; clearly this is not going to be suitable for most R objects. The solution is to <em>serialise</em> the R object. <code>redux</code> can accept objects serialised to strings or to byte streams, and the functions the <code>object_to_bin</code> and <code>object_to_string</code> functions can help here, serialising the objects to binary and string representations. (Alternatively you can do this yourself using <code>serialize</code>.)</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">obj &lt;-<span class="st"> </span>redux::<span class="kw">object_to_bin</span>(<span class="dv">1</span>:<span class="dv">10</span>)
 obj</code></pre></div>
-<pre><code>##  [1] 42 0a 02 00 00 00 03 03 03 00 00 03 02 00 0d 00 00 00 0a 00 00 00 01
+<pre><code>##  [1] 42 0a 02 00 00 00 01 04 03 00 00 03 02 00 0d 00 00 00 0a 00 00 00 01
 ## [24] 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00 05 00 00 00 06 00 00 00
 ## [47] 07 00 00 00 08 00 00 00 09 00 00 00 0a 00 00 00</code></pre>
 <p>or</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">str &lt;-<span class="st"> </span>redux::<span class="kw">object_to_string</span>(<span class="dv">1</span>:<span class="dv">10</span>)
 str</code></pre></div>
-<pre><code>## [1] &quot;A\n2\n197379\n131840\n13\n10\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n&quot;</code></pre>
+<pre><code>## [1] &quot;A\n2\n197633\n131840\n13\n10\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n&quot;</code></pre>
 <p>The binary serialisation is faster, smaller, and preserves all the bits of floating point numbers. The string version might be preferable where having only strings in the database is wanted. The binary serialisation is compatible with the same approach used in <code>RcppRedis</code>, though it is never done automatically.</p>
 <p>These values can be deserialised:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">redux::<span class="kw">bin_to_object</span>(obj)</code></pre></div>
@@ -126,7 +126,7 @@ str</code></pre></div>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">r$<span class="kw">SET</span>(<span class="st">&quot;mylist&quot;</span>, redux::<span class="kw">object_to_bin</span>(<span class="dv">1</span>:<span class="dv">10</span>))</code></pre></div>
 <pre><code>## [Redis: OK]</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">r$<span class="kw">GET</span>(<span class="st">&quot;mylist&quot;</span>)</code></pre></div>
-<pre><code>##  [1] 42 0a 02 00 00 00 03 03 03 00 00 03 02 00 0d 00 00 00 0a 00 00 00 01
+<pre><code>##  [1] 42 0a 02 00 00 00 01 04 03 00 00 03 02 00 0d 00 00 00 0a 00 00 00 01
 ## [24] 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00 05 00 00 00 06 00 00 00
 ## [47] 07 00 00 00 08 00 00 00 09 00 00 00 0a 00 00 00</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">redux::<span class="kw">bin_to_object</span>(r$<span class="kw">GET</span>(<span class="st">&quot;mylist&quot;</span>))</code></pre></div>
@@ -135,10 +135,10 @@ str</code></pre></div>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">r$<span class="kw">SET</span>(<span class="st">&quot;mylist&quot;</span>, redux::<span class="kw">object_to_string</span>(<span class="dv">1</span>:<span class="dv">10</span>))</code></pre></div>
 <pre><code>## [Redis: OK]</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">r$<span class="kw">GET</span>(<span class="st">&quot;mylist&quot;</span>)</code></pre></div>
-<pre><code>## [1] &quot;A\n2\n197379\n131840\n13\n10\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n&quot;</code></pre>
+<pre><code>## [1] &quot;A\n2\n197633\n131840\n13\n10\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n&quot;</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">redux::<span class="kw">string_to_object</span>(r$<span class="kw">GET</span>(<span class="st">&quot;mylist&quot;</span>))</code></pre></div>
 <pre><code>##  [1]  1  2  3  4  5  6  7  8  9 10</code></pre>
-<p>This gives you all the power of Redis, but you will have to manually serialise/deserialise all complicated R objects (i.e., everything other than logicals, numbers or strings). Similarly, you are responsible for type coersion/deserialisation when retrieving data at the other end.</p>
+<p>This gives you all the power of Redis, but you will have to manually serialise/deserialise all complicated R objects (i.e., everything other than logicals, numbers or strings). Similarly, you are responsible for type coercion/deserialisation when retrieving data at the other end.</p>
 <p>Note that you are not restricted to using serialised R objects as values; you can use them as keys; this is perfectly valid:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">r$<span class="kw">SET</span>(redux::<span class="kw">object_to_bin</span>(<span class="dv">1</span>:<span class="dv">10</span>), <span class="st">&quot;mydata&quot;</span>)</code></pre></div>
 <pre><code>## [Redis: OK]</code></pre>
@@ -149,7 +149,7 @@ str</code></pre></div>
 <pre><code>## [1] 10</code></pre>
 <p>(the returned value <code>10</code> indicates that the list “mylist2” is 10 elements long). There are lots of commands for operating on lists. For example, you can do things like;</p>
 <ul>
-<li>get an element by its index (note tht this uses C-style base-0 indexing for consistency with the <code>Redis</code> documentation rather than R’s semantics)</li>
+<li>get an element by its index (note that this uses C-style base-0 indexing for consistency with the <code>Redis</code> documentation rather than R’s semantics)</li>
 </ul>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">r$<span class="kw">LINDEX</span>(<span class="st">&quot;mylist2&quot;</span>, <span class="dv">1</span>)</code></pre></div>
 <pre><code>## [1] &quot;2&quot;</code></pre>
@@ -221,7 +221,7 @@ str</code></pre></div>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dat &lt;-<span class="st"> </span>r$<span class="kw">LRANGE</span>(<span class="st">&quot;mylist2&quot;</span>, <span class="dv">0</span>, <span class="dv">2</span>)
 dat</code></pre></div>
 <pre><code>## [[1]]
-## [1] &quot;A\n2\n197379\n131840\n13\n10\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n&quot;
+## [1] &quot;A\n2\n197633\n131840\n13\n10\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n&quot;
 ##
 ## [[2]]
 ## [1] &quot;carrot&quot;
@@ -269,7 +269,7 @@ r$<span class="kw">pipeline</span>(
 ## [1] 1</code></pre>
 <p>here a variable “x” was incremented twice and then deleted.</p>
 <p>If you use pipelining you should read the <a href="http://redis.io/topics/pipelining">Redis page on it</a> because there are a few restrictions and cautions.</p>
-<p>Generating very large numbers (or variable nubmers) of commands with the above interface will be difficult because <code>pipeline</code> uses the dots argument. Instead, you can pass a list of commands to the <code>.commands</code> argument of <code>pipeline</code>:</p>
+<p>Generating very large numbers (or variable numbers) of commands with the above interface will be difficult because <code>pipeline</code> uses the dots argument. Instead, you can pass a list of commands to the <code>.commands</code> argument of <code>pipeline</code>:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">cmds &lt;-<span class="st"> </span><span class="kw">lapply</span>(<span class="kw">seq_len</span>(<span class="dv">4</span>), function(.) redis$<span class="kw">PING</span>())
 r$<span class="kw">pipeline</span>(<span class="dt">.commands =</span> cmds)</code></pre></div>
 <pre><code>## [[1]]
@@ -306,7 +306,7 @@ r$<span class="kw">pipeline</span>(<span class="dt">.commands =</span> cmds)</co
                    <span class="dt">transform =</span> function(x) x$value,
                    <span class="dt">terminate =</span> function(x) <span class="kw">identical</span>(x, <span class="st">&quot;goodbye&quot;</span>),
                    <span class="dt">n =</span> <span class="dv">100</span>)</code></pre></div>
-<p><em>NOTE</em>: you need to be careful here - <code>hiredis</code> internally uses a blocking read which cannot be interrupted with Ctrl-C once started unless a message is recieved on the channels being listened to!</p>
+<p><em>NOTE</em>: you need to be careful here - <code>hiredis</code> internally uses a blocking read which cannot be interrupted with Ctrl-C once started unless a message is received on the channels being listened to!</p>
 <p>To test this out, we need a second process that will publish to the channel (or we’ll wait forever). This function will publish the first 20 values out of the Nile data set.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">r &lt;-<span class="st"> </span>redux::<span class="kw">hiredis</span>()
 for (i in Nile[<span class="dv">1</span>:<span class="dv">20</span>]) {
@@ -315,10 +315,10 @@ for (i in Nile[<span class="dv">1</span>:<span class="dv">20</span>]) {
 }
 r$<span class="kw">PUBLISH</span>(<span class="st">&quot;mychannel&quot;</span>, <span class="st">&quot;goodbye&quot;</span>)</code></pre></div>
 <p>This file is at <code>path_to_publisher</code> (in R’s temporary directory) and can be run with:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">system2</span>(<span class="kw">file.path</span>(<span class="kw">R.home</span>(), <span class="st">&quot;bin&quot;</span>, <span class="st">&quot;Rscript&quot;</span>), path_to_publisher,
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">system2</span>(<span class="kw">file.path</span>(<span class="kw">R.home</span>(<span class="st">&quot;bin&quot;</span>), <span class="st">&quot;Rscript&quot;</span>), path_to_publisher,
         <span class="dt">wait =</span> <span class="ot">FALSE</span>, <span class="dt">stdout =</span> <span class="ot">FALSE</span>, <span class="dt">stderr =</span> <span class="ot">FALSE</span>)</code></pre></div>
 <p>to start the publisher.</p>
-<p>Let’s add a little debgging information to the transform function, and set the subscriber off:</p>
+<p>Let’s add a little debugging information to the transform function, and set the subscriber off:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">transform &lt;-<span class="st"> </span>function(x) {
   <span class="kw">message</span>(<span class="kw">format</span>(<span class="kw">Sys.time</span>(), <span class="st">&quot;%Y-%m-%d %H:%M:%OS3&quot;</span>),
           <span class="st">&quot;: got message: &quot;</span>,
@@ -329,28 +329,28 @@ r$<span class="kw">PUBLISH</span>(<span class="st">&quot;mychannel&quot;</span>,
                    <span class="dt">transform =</span> transform,
                    <span class="dt">terminate =</span> function(x) <span class="kw">identical</span>(x, <span class="st">&quot;goodbye&quot;</span>),
                    <span class="dt">n =</span> <span class="dv">100</span>)</code></pre></div>
-<pre><code>## 2017-05-11 18:21:12.225: got message: 1120</code></pre>
-<pre><code>## 2017-05-11 18:21:12.281: got message: 1160</code></pre>
-<pre><code>## 2017-05-11 18:21:12.336: got message: 963</code></pre>
-<pre><code>## 2017-05-11 18:21:12.392: got message: 1210</code></pre>
-<pre><code>## 2017-05-11 18:21:12.447: got message: 1160</code></pre>
-<pre><code>## 2017-05-11 18:21:12.503: got message: 1160</code></pre>
-<pre><code>## 2017-05-11 18:21:12.556: got message: 813</code></pre>
-<pre><code>## 2017-05-11 18:21:12.612: got message: 1230</code></pre>
-<pre><code>## 2017-05-11 18:21:12.667: got message: 1370</code></pre>
-<pre><code>## 2017-05-11 18:21:12.723: got message: 1140</code></pre>
-<pre><code>## 2017-05-11 18:21:12.778: got message: 995</code></pre>
-<pre><code>## 2017-05-11 18:21:12.832: got message: 935</code></pre>
-<pre><code>## 2017-05-11 18:21:12.886: got message: 1110</code></pre>
-<pre><code>## 2017-05-11 18:21:12.942: got message: 994</code></pre>
-<pre><code>## 2017-05-11 18:21:12.997: got message: 1020</code></pre>
-<pre><code>## 2017-05-11 18:21:13.053: got message: 960</code></pre>
-<pre><code>## 2017-05-11 18:21:13.108: got message: 1180</code></pre>
-<pre><code>## 2017-05-11 18:21:13.164: got message: 799</code></pre>
-<pre><code>## 2017-05-11 18:21:13.218: got message: 958</code></pre>
-<pre><code>## 2017-05-11 18:21:13.273: got message: 1140</code></pre>
-<pre><code>## 2017-05-11 18:21:13.274: got message: goodbye</code></pre>
-<p>The timestamps in the printed output show when the message was recieved (with fractional seconds so that this is more obvious since this only takes ~1s to complete).</p>
+<pre><code>## 2018-05-25 17:29:29.348: got message: 1120</code></pre>
+<pre><code>## 2018-05-25 17:29:29.402: got message: 1160</code></pre>
+<pre><code>## 2018-05-25 17:29:29.454: got message: 963</code></pre>
+<pre><code>## 2018-05-25 17:29:29.509: got message: 1210</code></pre>
+<pre><code>## 2018-05-25 17:29:29.561: got message: 1160</code></pre>
+<pre><code>## 2018-05-25 17:29:29.617: got message: 1160</code></pre>
+<pre><code>## 2018-05-25 17:29:29.672: got message: 813</code></pre>
+<pre><code>## 2018-05-25 17:29:29.726: got message: 1230</code></pre>
+<pre><code>## 2018-05-25 17:29:29.777: got message: 1370</code></pre>
+<pre><code>## 2018-05-25 17:29:29.828: got message: 1140</code></pre>
+<pre><code>## 2018-05-25 17:29:29.884: got message: 995</code></pre>
+<pre><code>## 2018-05-25 17:29:29.939: got message: 935</code></pre>
+<pre><code>## 2018-05-25 17:29:29.992: got message: 1110</code></pre>
+<pre><code>## 2018-05-25 17:29:30.042: got message: 994</code></pre>
+<pre><code>## 2018-05-25 17:29:30.095: got message: 1020</code></pre>
+<pre><code>## 2018-05-25 17:29:30.151: got message: 960</code></pre>
+<pre><code>## 2018-05-25 17:29:30.203: got message: 1180</code></pre>
+<pre><code>## 2018-05-25 17:29:30.256: got message: 799</code></pre>
+<pre><code>## 2018-05-25 17:29:30.308: got message: 958</code></pre>
+<pre><code>## 2018-05-25 17:29:30.362: got message: 1140</code></pre>
+<pre><code>## 2018-05-25 17:29:30.363: got message: goodbye</code></pre>
+<p>The timestamps in the printed output show when the message was received (with fractional seconds so that this is more obvious since this only takes ~1s to complete).</p>
 <p>The <code>res</code> object contains all the values, including the “goodbye” that was our end-of-stream message:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">unlist</span>(res)</code></pre></div>
 <pre><code>##  [1] &quot;1120&quot;    &quot;1160&quot;    &quot;963&quot;     &quot;1210&quot;    &quot;1160&quot;    &quot;1160&quot;    &quot;813&quot;
@@ -399,7 +399,7 @@ obj[[<span class="dv">2</span>]] ==<span class="st"> </span>obj2[[<span class="d
 </div>
 <div id="scripts" class="section level1">
 <h1>Scripts</h1>
-<p>Redis allows storing and evaluting Lua scripts on the redis server. At this point it’s all getting a bit meta (using R to tell Redis to call another dynamic language that drives Redis) but this can be very useful - especially in avoiding race conditions (because a script is atomic) and avoiding roundtrips.</p>
+<p>Redis allows storing and evaluating Lua scripts on the redis server. At this point it’s all getting a bit meta (using R to tell Redis to call another dynamic language that drives Redis) but this can be very useful - especially in avoiding race conditions (because a script is atomic) and avoiding roundtrips.</p>
 <p>Describing how to write Lua scripts is out of scope for this document but is a bit fiddly. Here is a trivial one that returns the value of a key:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">r$<span class="kw">SET</span>(<span class="st">&quot;key&quot;</span>, <span class="st">&quot;a&quot;</span>)</code></pre></div>
 <pre><code>## [Redis: OK]</code></pre>

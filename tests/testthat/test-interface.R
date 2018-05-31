@@ -2,8 +2,7 @@ context("interface")
 
 ## Multiple args OK:
 test_that("MSET / MGET / DEL", {
-  skip_if_no_redis()
-  r <- hiredis()
+  r <- test_hiredis_connection()
   expect_equal(r$MSET(letters, LETTERS), redis_status("OK"))
   expect_equal(vapply(letters, r$EXISTS, integer(1), USE.NAMES = FALSE),
                rep(1L, length(letters)))
@@ -15,10 +14,9 @@ test_that("MSET / MGET / DEL", {
 
 ## SORT is the most complicated, so lets nail that
 test_that("SORT", {
-  skip_if_no_redis()
+  r <- test_hiredis_connection()
   key <- rand_str()
   i <- sample(20)
-  r <- hiredis()
   expect_equal(r$RPUSH(key, i), 20)
   on.exit(r$DEL(key))
   res <- r$SORT(key)
@@ -44,7 +42,7 @@ test_that("SORT", {
                rev(cmp_alpha))
 
   key2 <- rand_str()
-  on.exit(r$DEL(key2))
+  on.exit(r$DEL(key2), add = TRUE)
   expect_equal(r$SORT(key, STORE = key2), length(i))
   ## TODO: rlite doesn't return a redis_status here, which seems like a bug.
   ##   expect_equal(r$TYPE(key2), redis_status("list")))
@@ -56,8 +54,7 @@ test_that("SORT", {
 
 ## SCAN does some cool things; let's try that, too.
 test_that("SCAN", {
-  skip_if_no_redis()
-  r <- hiredis()
+  r <- test_hiredis_connection()
   skip_if_no_scan(r)
 
   prefix <- paste0(rand_str(), ":")
@@ -94,9 +91,7 @@ test_that("SCAN", {
 })
 
 test_that("serialisation", {
-  skip_if_no_redis()
-
-  r <- hiredis()
+  r <- test_hiredis_connection()
 
   key <- rand_str()
   on.exit(r$DEL(key))
@@ -127,14 +122,15 @@ test_that("serialisation", {
 })
 
 test_that("pipeline naming", {
-  skip_if_no_redis()
-  con <- hiredis()
+  con <- test_hiredis_connection()
   redis <- redux::redis
 
   res <- con$pipeline(
     a = redis$SET("a", 1),
-    b = redis$GET("a"))
-  expect_equal(names(res), c("a", "b"))
+    b = redis$GET("a"),
+    c = redis$DEL("a"))
+  expect_equal(names(res), c("a", "b", "c"))
   expect_equal(res$a, redis_status("OK"))
   expect_equal(res$b, "1")
+  expect_equal(res$c, 1)
 })

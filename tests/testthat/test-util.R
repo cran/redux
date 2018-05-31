@@ -26,6 +26,8 @@ test_that("assertions work", {
   expect_error(assert_scalar_or_raw(1:2),
                "must be a scalar")
 
+  expect_error(assert_raw(1), "must be raw")
+
   expect_silent(assert_scalar_or_null(NULL))
   expect_silent(assert_scalar_or_null(1))
   expect_error(assert_scalar_or_null(character(0)),
@@ -53,4 +55,11 @@ test_that("assertions work", {
 test_that("hiredis_function", {
   expect_error(hiredis_function("foo", list(a = identity), required = TRUE),
                "Interface function foo required")
+  f <- hiredis_function("foo", structure(list(), type = "bar"), FALSE)
+  expect_is(f, "function")
+  expect_error(f(), "foo is not supported with the bar interface")
+})
+
+test_that("str_drop_start", {
+  expect_equal(str_drop_start("foo:bar", "xxx:"), "bar")
 })

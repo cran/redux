@@ -13,7 +13,7 @@ start_publisher <- function(channel, dt = 0.02) {
   testthat::skip_if_not_installed("sys")
   skip_if_no_redis()
 
-  Rscript <- file.path(R.home(), "Rscript")
+  Rscript <- file.path(R.home("bin"), "Rscript")
   if (!file.exists(Rscript)) {
     Rscript <- Sys.which("Rscript")
     if (!nzchar(Rscript)) {
@@ -41,3 +41,5 @@ start_publisher <- function(channel, dt = 0.02) {
   }
   list(pid = pid, filename = filename, log = log)
 }
+
+`%||%` <- function(a, b) if (is.null(a)) b else a

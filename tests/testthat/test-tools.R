@@ -2,8 +2,7 @@ context("tools")
 
 ## Pretty simple tests here; just aiming not to fail.
 test_that("parse_info", {
-  skip_if_no_redis()
-  con <- hiredis()
+  con <- test_hiredis_connection()
   skip_if_no_info(con)
   info <- redis_info(con)
   expect_is(info, "list")
@@ -27,8 +26,7 @@ test_that("parse_info", {
 ## but at this point I don't think all are used.  WATCH in particular
 ## might not be possible
 test_that("redis_multi", {
-  skip_if_no_redis()
-  con <- hiredis()
+  con <- test_hiredis_connection()
   id <- rand_str()
   on.exit(con$DEL(id))
   con$DEL(id)
@@ -51,10 +49,9 @@ test_that("redis_multi", {
 })
 
 test_that("from_redis_hash", {
-  skip_if_no_redis()
-  con <- hiredis()
+  con <- test_hiredis_connection()
 
-  key <- digest::digest(Sys.time())
+  key <- rand_str()
   fields <- letters[1:5]
   vals <- 1:5
   con$HMSET(key, fields, vals)
@@ -80,8 +77,7 @@ test_that("from_redis_hash", {
 })
 
 test_that("redis_time", {
-  skip_if_no_redis()
-  con <- hiredis()
+  con <- test_hiredis_connection()
   skip_if_no_time(con)
 
   expect_is(redis_time(con), "character")
@@ -90,8 +86,7 @@ test_that("redis_time", {
 
 ## This is just a really simple test that this works at all:
 test_that("scripts", {
-  skip_if_no_redis()
-  r <- hiredis()
+  r <- test_hiredis_connection()
   ## A little lua script
   lua <- '
   local keyname = KEYS[1]
@@ -100,10 +95,13 @@ test_that("scripts", {
   redis.call("INCR", keyname)
   return redis.call("GET", keyname)'
 
+  key <- rand_str()
+
   obj <- redis_scripts(r, set_and_incr = lua)
-  r$DEL("foo")
-  res <- obj("set_and_incr", "foo", "10")
+  r$DEL(key)
+  res <- obj("set_and_incr", key, "10")
   expect_equal(res, "11")
+  r$DEL(key)
 })
 
 test_that("parse_client_info", {

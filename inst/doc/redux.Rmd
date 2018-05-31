@@ -1,7 +1,7 @@
 ---
 title: "Using Redis with redux"
 author: "Rich FitzJohn"
-date: "2017-05-11"
+date: "2018-05-25"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Using Redis with redux}
@@ -90,7 +90,7 @@ objects.  The solution is to *serialise* the R object.  `redux` can
 accept objects serialised to strings or to byte streams, and the
 functions the `object_to_bin` and `object_to_string` functions can
 help here, serialising the objects to binary and string
-represenations.  (Alternatively you can do this yourself using
+representations.  (Alternatively you can do this yourself using
 `serialize`.)
 
 ```r
@@ -99,7 +99,7 @@ obj
 ```
 
 ```
-##  [1] 42 0a 02 00 00 00 03 03 03 00 00 03 02 00 0d 00 00 00 0a 00 00 00 01
+##  [1] 42 0a 02 00 00 00 01 04 03 00 00 03 02 00 0d 00 00 00 0a 00 00 00 01
 ## [24] 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00 05 00 00 00 06 00 00 00
 ## [47] 07 00 00 00 08 00 00 00 09 00 00 00 0a 00 00 00
 ```
@@ -112,7 +112,7 @@ str
 ```
 
 ```
-## [1] "A\n2\n197379\n131840\n13\n10\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n"
+## [1] "A\n2\n197633\n131840\n13\n10\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n"
 ```
 
 The binary serialisation is faster, smaller, and preserves all the
@@ -154,7 +154,7 @@ r$GET("mylist")
 ```
 
 ```
-##  [1] 42 0a 02 00 00 00 03 03 03 00 00 03 02 00 0d 00 00 00 0a 00 00 00 01
+##  [1] 42 0a 02 00 00 00 01 04 03 00 00 03 02 00 0d 00 00 00 0a 00 00 00 01
 ## [24] 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00 05 00 00 00 06 00 00 00
 ## [47] 07 00 00 00 08 00 00 00 09 00 00 00 0a 00 00 00
 ```
@@ -182,7 +182,7 @@ r$GET("mylist")
 ```
 
 ```
-## [1] "A\n2\n197379\n131840\n13\n10\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n"
+## [1] "A\n2\n197633\n131840\n13\n10\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n"
 ```
 
 ```r
@@ -196,7 +196,7 @@ redux::string_to_object(r$GET("mylist"))
 This gives you all the power of Redis, but you will have to
 manually serialise/deserialise all complicated R objects (i.e.,
 everything other than logicals, numbers or strings).  Similarly,
-you are responsible for type coersion/deserialisation when
+you are responsible for type coercion/deserialisation when
 retrieving data at the other end.
 
 Note that you are not restricted to using serialised R objects as
@@ -236,7 +236,7 @@ r$RPUSH("mylist2", 1:10)
 elements long).  There are lots of commands for operating on lists.
 For example, you can do things like;
 
-* get an element by its index (note tht this uses C-style base-0
+* get an element by its index (note that this uses C-style base-0
 indexing for consistency with the `Redis` documentation rather than
 R's semantics)
 
@@ -368,7 +368,7 @@ dat
 
 ```
 ## [[1]]
-## [1] "A\n2\n197379\n131840\n13\n10\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n"
+## [1] "A\n2\n197633\n131840\n13\n10\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n"
 ##
 ## [[2]]
 ## [1] "carrot"
@@ -452,7 +452,7 @@ If you use pipelining you should read the [Redis page on
 it](http://redis.io/topics/pipelining) because there are a few
 restrictions and cautions.
 
-Generating very large numbers (or variable nubmers) of commands
+Generating very large numbers (or variable numbers) of commands
 with the above interface will be difficult because `pipeline` uses
 the dots argument.  Instead, you can pass a list of commands to the
 `.commands` argument of `pipeline`:
@@ -538,7 +538,7 @@ res <- r$subscribe("mychannel",
 
 *NOTE*: you need to be careful here - `hiredis` internally uses a
 blocking read which cannot be interrupted with Ctrl-C once started
-unless a message is recieved on the channels being listened to!
+unless a message is received on the channels being listened to!
 
 To test this out, we need a second process that will publish to the
 channel (or we'll wait forever).  This function will publish the
@@ -558,13 +558,13 @@ This file is at `path_to_publisher` (in R's temporary directory)
 and can be run with:
 
 ```r
-system2(file.path(R.home(), "bin", "Rscript"), path_to_publisher,
+system2(file.path(R.home("bin"), "Rscript"), path_to_publisher,
         wait = FALSE, stdout = FALSE, stderr = FALSE)
 ```
 
 to start the publisher.
 
-Let's add a little debgging information to the transform function,
+Let's add a little debugging information to the transform function,
 and set the subscriber off:
 
 ```r
@@ -584,93 +584,93 @@ res <- r$subscribe("mychannel",
 ```
 
 ```
-## 2017-05-11 18:21:12.225: got message: 1120
+## 2018-05-25 17:29:29.348: got message: 1120
 ```
 
 ```
-## 2017-05-11 18:21:12.281: got message: 1160
+## 2018-05-25 17:29:29.402: got message: 1160
 ```
 
 ```
-## 2017-05-11 18:21:12.336: got message: 963
+## 2018-05-25 17:29:29.454: got message: 963
 ```
 
 ```
-## 2017-05-11 18:21:12.392: got message: 1210
+## 2018-05-25 17:29:29.509: got message: 1210
 ```
 
 ```
-## 2017-05-11 18:21:12.447: got message: 1160
+## 2018-05-25 17:29:29.561: got message: 1160
 ```
 
 ```
-## 2017-05-11 18:21:12.503: got message: 1160
+## 2018-05-25 17:29:29.617: got message: 1160
 ```
 
 ```
-## 2017-05-11 18:21:12.556: got message: 813
+## 2018-05-25 17:29:29.672: got message: 813
 ```
 
 ```
-## 2017-05-11 18:21:12.612: got message: 1230
+## 2018-05-25 17:29:29.726: got message: 1230
 ```
 
 ```
-## 2017-05-11 18:21:12.667: got message: 1370
+## 2018-05-25 17:29:29.777: got message: 1370
 ```
 
 ```
-## 2017-05-11 18:21:12.723: got message: 1140
+## 2018-05-25 17:29:29.828: got message: 1140
 ```
 
 ```
-## 2017-05-11 18:21:12.778: got message: 995
+## 2018-05-25 17:29:29.884: got message: 995
 ```
 
 ```
-## 2017-05-11 18:21:12.832: got message: 935
+## 2018-05-25 17:29:29.939: got message: 935
 ```
 
 ```
-## 2017-05-11 18:21:12.886: got message: 1110
+## 2018-05-25 17:29:29.992: got message: 1110
 ```
 
 ```
-## 2017-05-11 18:21:12.942: got message: 994
+## 2018-05-25 17:29:30.042: got message: 994
 ```
 
 ```
-## 2017-05-11 18:21:12.997: got message: 1020
+## 2018-05-25 17:29:30.095: got message: 1020
 ```
 
 ```
-## 2017-05-11 18:21:13.053: got message: 960
+## 2018-05-25 17:29:30.151: got message: 960
 ```
 
 ```
-## 2017-05-11 18:21:13.108: got message: 1180
+## 2018-05-25 17:29:30.203: got message: 1180
 ```
 
 ```
-## 2017-05-11 18:21:13.164: got message: 799
+## 2018-05-25 17:29:30.256: got message: 799
 ```
 
 ```
-## 2017-05-11 18:21:13.218: got message: 958
+## 2018-05-25 17:29:30.308: got message: 958
 ```
 
 ```
-## 2017-05-11 18:21:13.273: got message: 1140
+## 2018-05-25 17:29:30.362: got message: 1140
 ```
 
 ```
-## 2017-05-11 18:21:13.274: got message: goodbye
+## 2018-05-25 17:29:30.363: got message: goodbye
 ```
 
 
 
 The timestamps in the printed output show when the message was
-recieved (with fractional seconds so that this is more obvious
+received (with fractional seconds so that this is more obvious
 since this only takes ~1s to complete).
 
 The `res` object contains all the values, including the "goodbye"
@@ -768,7 +768,7 @@ For a better version of this, see
 
 # Scripts
 
-Redis allows storing and evaluting Lua scripts on the redis server.
+Redis allows storing and evaluating Lua scripts on the redis server.
 At this point it's all getting a bit meta (using R to tell Redis to
 call another dynamic language that drives Redis) but this can be
 very useful - especially in avoiding race conditions (because a
