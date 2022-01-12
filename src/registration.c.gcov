@@ -1,0 +1,44 @@
+        -:    0:Source:registration.c
+        -:    0:Graph:/home/rich/Documents/src/redux/src/registration.gcno
+        -:    0:Data:/home/rich/Documents/src/redux/src/registration.gcda
+        -:    0:Runs:9
+        -:    1:#ifdef _WIN32
+        -:    2:#include <winsock2.h>
+        -:    3:#endif
+        -:    4:#include "connection.h"
+        -:    5:#include "conversions.h"
+        -:    6:#include "subscribe.h"
+        -:    7:#include <R_ext/Rdynload.h>
+        -:    8:#include <Rversion.h>
+        -:    9:
+        -:   10:static const R_CallMethodDef callMethods[] = {
+        -:   11:  {"Credux_redis_connect",       (DL_FUNC) &redux_redis_connect,        3},
+        -:   12:  {"Credux_redis_connect_unix",  (DL_FUNC) &redux_redis_connect_unix,   2},
+        -:   13:
+        -:   14:  {"Credux_redis_command",       (DL_FUNC) &redux_redis_command,        2},
+        -:   15:
+        -:   16:  {"Credux_redis_pipeline",      (DL_FUNC) &redux_redis_pipeline,       2},
+        -:   17:
+        -:   18:  {"Credux_redis_subscribe",     (DL_FUNC) &redux_redis_subscribe,      5},
+        -:   19:  {"Credux_redis_unsubscribe",   (DL_FUNC) &redux_redis_unsubscribe,    3},
+        -:   20:
+        -:   21:  // Used in testing only:
+        -:   22:  {"Credis_flatten_command",     (DL_FUNC) &redis_flatten_command,      1},
+        -:   23:  {"Credis_check_command",       (DL_FUNC) &redis_check_command,        1},
+        -:   24:
+        -:   25:  {NULL,                         NULL,                                  0}
+        -:   26:};
+        -:   27:
+        9:   28:void R_init_redux(DllInfo *info) {
+        -:   29:#ifdef _WIN32
+        -:   30:  // This is needed to ensure that the windows socket library is
+        -:   31:  // correctly initialised, otherwise a socket error will occur.
+        -:   32:  WSADATA wsaData;
+        -:   33:  WSAStartup(MAKEWORD(2, 2), &wsaData);
+        -:   34:#endif
+        9:   35:  R_registerRoutines(info, NULL, callMethods, NULL, NULL);
+        -:   36:#if defined(R_VERSION) && R_VERSION >= R_Version(3, 3, 0)
+        9:   37:  R_useDynamicSymbols(info, FALSE);
+        9:   38:  R_forceSymbols(info, TRUE);
+        -:   39:#endif
+        9:   40:}

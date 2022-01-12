@@ -1,0 +1,107 @@
+        -:    0:Source:subscribe.c
+        -:    0:Graph:/home/rich/Documents/src/redux/src/subscribe.gcno
+        -:    0:Data:/home/rich/Documents/src/redux/src/subscribe.gcda
+        -:    0:Runs:9
+        -:    1:#include "subscribe.h"
+        -:    2:#include "conversions.h"
+        -:    3:
+        7:    4:SEXP redux_redis_subscribe(SEXP extPtr, SEXP channel, SEXP pattern,
+        -:    5:                           SEXP callback, SEXP envir) {
+        7:    6:  const int p = INTEGER(pattern)[0];
+        7:    7:  SEXP cmd = PROTECT(allocVector(VECSXP, 2));
+        7:    8:  SET_VECTOR_ELT(cmd, 0, mkString(p ? "PSUBSCRIBE" : "SUBSCRIBE"));
+        7:    9:  SET_VECTOR_ELT(cmd, 1, channel);
+        7:   10:  cmd = PROTECT(redis_check_command(cmd));
+        7:   11:  SEXP ret = PROTECT(redux_redis_command(extPtr, cmd));
+        -:   12:
+        7:   13:  redux_redis_subscribe_loop(redis_get_context(extPtr, true),
+        -:   14:                             p, callback, envir);
+        -:   15:
+        5:   16:  UNPROTECT(3);
+        5:   17:  return ret;
+        -:   18:}
+        -:   19:
+        7:   20:void redux_redis_subscribe_loop(redisContext* context, int pattern,
+        -:   21:                                SEXP callback, SEXP envir) {
+        7:   22:  SEXP call = PROTECT(lang2(callback, R_NilValue));
+        7:   23:  redisReply *reply = NULL;
+        7:   24:  int keep_going = 1;
+        -:   25:  // Nasty:
+        7:   26:  SEXP nms = PROTECT(allocVector(STRSXP, pattern ? 4 : 3));
+        7:   27:  int i = 0;
+        7:   28:  SET_STRING_ELT(nms, i++, mkChar("type"));
+        7:   29:  if (pattern) {
+        1:   30:    SET_STRING_ELT(nms, i++, mkChar("pattern"));
+        -:   31:  }
+        7:   32:  SET_STRING_ELT(nms, i++, mkChar("channel"));
+        7:   33:  SET_STRING_ELT(nms, i++, mkChar("value"));
+        -:   34:
+        -:   35:  // And we're off.  Adding a timeout here seems sensible to me as
+        -:   36:  // that would allow for _some_ sort of interrupt checking, but as it
+        -:   37:  // is, this seems extremely difficult to do without risking killing
+        -:   38:  // the client.
+       58:   39:  while (keep_going) {
+       53:   40:    R_CheckUserInterrupt();
+       53:   41:    redisGetReply(context, (void*)&reply);
+       53:   42:    SEXP x = PROTECT(redis_reply_to_sexp(reply, false));
+       53:   43:    setAttrib(x, R_NamesSymbol, nms);
+       53:   44:    SETCADR(call, x);
+       53:   45:    freeReplyObject(reply);
+       53:   46:    SEXP val = PROTECT(eval(call, envir));
+       51:   47:    if (TYPEOF(val) == LGLSXP && LENGTH(val) == 1 && INTEGER(val)[0] == 1) {
+        5:   48:      keep_going = 0;
+        -:   49:    }
+       51:   50:    UNPROTECT(2); // x, val
+        -:   51:  }
+        5:   52:  UNPROTECT(2); // nms, call
+        5:   53:}
+        -:   54:
+        7:   55:SEXP redux_redis_unsubscribe(SEXP extPtr, SEXP channel, SEXP pattern) {
+        7:   56:  redisContext *context = redis_get_context(extPtr, true);
+        -:   57:  // Issue the unsubscribe command:
+        7:   58:  const int p = INTEGER(pattern)[0];
+        7:   59:  SEXP cmd = PROTECT(allocVector(VECSXP, 2));
+        7:   60:  SET_VECTOR_ELT(cmd, 0, mkString(p ? "PUNSUBSCRIBE" : "UNSUBSCRIBE"));
+        7:   61:  SET_VECTOR_ELT(cmd, 1, channel);
+        7:   62:  cmd = PROTECT(redis_check_command(cmd));
+        -:   63:  // Arrange the command:
+        7:   64:  const char **argv = NULL;
+        7:   65:  size_t *argvlen = NULL;
+        7:   66:  const size_t argc = sexp_to_redis(cmd, &argv, &argvlen);
+        -:   67:  // Issue the unsubscribe request:
+        7:   68:  redisReply *reply = redisCommandArgv(context, argc, argv, argvlen);
+        -:   69:  // Then loop until the reply looks correct.
+        7:   70:  int n_discarded = 0;
+        -:   71:  while (1) {
+       55:   72:    if (reply == NULL) {
+        -:   73:      // Here, we probably should consider destroying the client as
+        -:   74:      // there is no API way of ensuring that the responses are dealt
+        -:   75:      // with.
+        -:   76:      //
+        -:   77:      // This needs testing with toxiproxy.
+    #####:   78:      error("Redis connection error: client likely in awkward spot"); // # nocov
+        -:   79:    }
+        -:   80:    // This is possibly over-cautious, but it doesn't really hurt.
+       55:   81:    if (reply->type == REDIS_REPLY_ARRAY && reply->elements == 3) {
+       55:   82:      redisReply *reply0 = reply->element[0];
+       55:   83:      if (reply0->type == REDIS_REPLY_STRING &&
+       55:   84:          strcmp(reply0->str, p ? "punsubscribe" : "unsubscribe") == 0) {
+        7:   85:        break;
+        -:   86:      }
+        -:   87:    }
+       48:   88:    freeReplyObject(reply);
+       48:   89:    reply = NULL;
+       48:   90:    n_discarded++;
+       48:   91:    redisGetReply(context, (void*)&reply);
+        -:   92:  }
+        7:   93:  SEXP ret = PROTECT(redis_reply_to_sexp(reply, true));
+        7:   94:  freeReplyObject(reply);
+        7:   95:  if (n_discarded > 0) {
+        2:   96:    SEXP key = PROTECT(mkString("n_discarded"));
+        2:   97:    SEXP val = PROTECT(ScalarInteger(n_discarded));
+        2:   98:    setAttrib(ret, key, val);
+        2:   99:    UNPROTECT(2);
+        -:  100:  }
+        7:  101:  UNPROTECT(3);
+        7:  102:  return ret;
+        -:  103:}
